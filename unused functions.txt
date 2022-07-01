@@ -1,0 +1,68 @@
+    
+    #Function to get highest probability of a model
+    def get_highest(self,top,method):
+        highest=[]
+        i=0
+        if method=="trigram":
+            model=self.trigram
+        elif method=="bigram":
+            model=self.bigram
+        else:
+            model=self.unigram
+            
+        while i<(top-1):
+            highest.append(0)
+            i+=1
+        for token in model:
+            #print(token,"'s probability; '",self.get_prob(token))
+            p=self.get_prob(token)
+            x=0
+            while(x<top-1):
+                if(p>(highest[x])):
+                    temp=highest[x]
+                    highest[x]=p
+                    p=temp
+                x+=1
+        print(highest)
+        
+        
+    #Function to get the most likely word to come next
+    def nextlikely(self,current="",k=1,method="unigram"):
+        blacklist=["__START"]
+        
+        if method=="unigram":
+            dist=self.unigram
+        elif method=="bigram":
+            dist=self.bigram.get(current,{})
+        elif method=="trigram":
+            dist=self.trigram.get(current,{})
+        
+        #sort the tokens by unigram probability
+        mostlikely=sorted(list(dist.items()),key=operator.itemgetter(1),reverse=True)
+        #filter out any undesirable tokens
+        filtered=[w for (w,p) in mostlikely if w not in blacklist]
+        #choose one randomly from the top k
+        return random.choice(filtered[:k])
+    
+    
+    #Function to randomly generate a sentence based on probabs of a model 
+    def generate(self,k=1,end="_END",limit=20,method="bigram",methodparams={}):
+        if method=="":
+            method=methodparams.get("method","bigram")
+        current="_START"
+        tokens=[current]
+        w2="_END"
+
+        while current!=end and len(tokens)<limit:
+            temp=current
+            if method=="trigram":
+                current=self.nextlikely(k=k,current=(w2+" "+current),method=method)
+            elif method=="bigram":
+                current=self.nextlikely(k=k,current=(current),method=method)
+            else:
+                current=self.nextlikely(k=k,current=current,method=method)
+            w2=temp
+            tokens.append(current)                
+        return " ".join(tokens[:-1])
+    
+    
